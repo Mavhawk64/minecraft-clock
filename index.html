@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Minecraft Time Converter</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    max-width: 900px;
+    margin: 40px auto;
+    background: #181818;
+    color: white;
+}
+
+h1 {
+    margin-bottom: 0;
+}
+
+.card {
+    background: #262626;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+}
+
+input {
+    font-size: 18px;
+    padding: 8px;
+    width: 160px;
+}
+
+.result {
+    font-size: 22px;
+    margin-top: 12px;
+    color: #89d7ff;
+    font-weight: bold;
+}
+
+.timeline {
+    margin-top: 30px;
+}
+
+canvas {
+    width: 100%;
+    height: 70px;
+    background: #303030;
+    border-radius: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Minecraft Time Converter</h1>
+<p>0 ticks = 06:00 (6:00 AM)</p>
+
+<div class="card">
+
+<h2>Tick → Time</h2>
+
+<input id="ticks" type="number" step="0.01" value="11833.33">
+
+<div class="result" id="tickResult"></div>
+
+</div>
+
+<div class="card">
+
+<h2>Time → Tick</h2>
+
+<input id="time" type="time" value="17:50">
+
+<div class="result" id="timeResult"></div>
+
+</div>
+
+<div class="card">
+
+<h2>Timeline</h2>
+
+<canvas id="timeline" width="800" height="70"></canvas>
+
+</div>
+
+<script>
+
+function pad(n){
+    return String(n).padStart(2,'0');
+}
+
+function ticksToTime(ticks){
+
+    ticks=((ticks%24000)+24000)%24000;
+
+    let total=ticks/1000+6;
+
+    total%=24;
+
+    let hour=Math.floor(total);
+
+    let minute=Math.round((total-hour)*60);
+
+    if(minute===60){
+        minute=0;
+        hour=(hour+1)%24;
+    }
+
+    let suffix=hour>=12?"PM":"AM";
+    let h12=hour%12;
+    if(h12===0) h12=12;
+
+    return {
+        hour,
+        minute,
+        text24:`${pad(hour)}:${pad(minute)}`,
+        text12:`${h12}:${pad(minute)} ${suffix}`
+    };
+}
+
+function timeToTicks(hour,minute){
+
+    let mcHour=(hour-6+24)%24;
+
+    return (mcHour*1000)+(minute/60)*1000;
+}
+
+function update(){
+
+    let ticks=parseFloat(document.getElementById("ticks").value)||0;
+
+    let t=ticksToTime(ticks);
+
+    document.getElementById("tickResult").innerHTML=
+        `${t.text24}<br>${t.text12}`;
+
+    let parts=document.getElementById("time").value.split(":");
+
+    let tick=timeToTicks(
+        parseInt(parts[0]),
+        parseInt(parts[1])
+    );
+
+    document.getElementById("timeResult").innerHTML=
+        tick.toFixed(2)+" ticks";
+
+    drawTimeline(ticks);
+
+}
+
+function drawTimeline(current){
+
+    const canvas=document.getElementById("timeline");
+    const ctx=canvas.getContext("2d");
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.strokeStyle="white";
+
+    ctx.beginPath();
+
+    ctx.moveTo(40,35);
+    ctx.lineTo(760,35);
+
+    ctx.stroke();
+
+    for(let h=0;h<=24;h++){
+
+        let x=40+h*(720/24);
+
+        ctx.beginPath();
+        ctx.moveTo(x,28);
+        ctx.lineTo(x,42);
+        ctx.stroke();
+
+        let hour=(h+6)%24;
+
+        ctx.fillText(
+            pad(hour),
+            x-8,
+            58
+        );
+    }
+
+    let x=40+(current/24000)*720;
+
+    ctx.fillStyle="#66d9ff";
+
+    ctx.beginPath();
+    ctx.arc(x,35,6,0,2*Math.PI);
+    ctx.fill();
+
+}
+
+document.getElementById("ticks").addEventListener("input",update);
+document.getElementById("time").addEventListener("input",update);
+
+update();
+
+</script>
+
+</body>
+</html>
